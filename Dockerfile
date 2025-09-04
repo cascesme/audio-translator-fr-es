@@ -16,6 +16,20 @@ WORKDIR /app
 COPY requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
 
+# Install Argos models offline
+COPY models/ /models/
+RUN python - <<'PY'
+import glob
+import argostranslate.package as pkg
+paths = glob.glob("/models/*.argosmodel")
+assert paths, "No .argosmodel files found in /models"
+for p in paths:
+    print("Installing Argos package:", p)
+    pkg.install_from_path(p)
+print("Argos packages installed.")
+PY
+
+
 # --- Prefetch models at build time so first run is fast/offline-ish ---
 # 1) Argos Translate: install French->Spanish package
 # 2) Coqui TTS: pre-download a Spanish voice model

@@ -60,58 +60,30 @@ def main():
     print(f"Wrote French transcript: {out_fr_txt}")
 
     # ---------- 2) Translation ----------
-    print("Translating FR -> ES…", file=sys.stderr)
-
-    import argostranslate.package as argo_pkg
+    # ---------- 2) Translation: French text -> Spanish text (via English pivot) ----------
     import argostranslate.translate as argo
-
-    def ensure_argos_model(src_code: str, tgt_code: str) -> None:
-    # If the language pair isn't installed, fetch and install it.
-        installed = argo.get_installed_languages()
-        has_src = any(l.code == src_code for l in installed)
-        has_tgt = any(l.code == tgt_code for l in installed)
-
-        if has_src and has_tgt:
-            # Might still be missing the *pair*—we’ll check below, but try installing anyway if needed.
-            pass
-
-        try:
-            argo_pkg.update_package_index()
-            available = argo_pkg.get_available_packages()
-            candidates = [p for p in available if p.from_code == src_code and p.to_code == tgt_code]
-            if candidates:
-                pkg = candidates[0]
-                print(f"Installing Argos model {src_code}->{tgt_code}…", file=sys.stderr)
-                pkg_path = pkg.download()
-                argo_pkg.install_from_path(pkg_path)
-        except Exception as e:
-            print(f"Warning: could not auto-install Argos model ({src_code}->{tgt_code}): {e}", file=sys.stderr)
-    
-    ensure_argos_model(args.src, args.tgt)
+    print("Translating FR -> EN -> ES…", file=sys.stderr)
 
     installed = argo.get_installed_languages()
-    src_lang = next((l for l in installed if l.code == args.src), None)
-    tgt_lang = next((l for l in installed if l.code == args.tgt), None)
+    def get_lang(code): 
+        return next((l for l in installed if l.code == code), None)
 
-    if not src_lang or not tgt_lang:
-        print(
-        "Argos Translate languages not found after install attempt. "
-        "This usually means the container had no internet to download the model. "
-        "Options:\n"
-        "  • Rebuild with network and keep the prefetch step, or\n"
-        "  • Run once with internet to let the container auto-install models.\n",
-        file=sys.stderr
-        )
+    fr = get_lang("fr"); en = get_lang("en"); es = get_lang("es")
+    missing = [c for c,lang in [("fr",fr),("en",en),("es",es)] if not lang]
+    if missing:
+        print(f"Argos languages missing in image: {missing}. Make sure FR->EN and EN->ES models were installed.", file=sys.stderr)
         sys.exit(3)
 
-    translator = src_lang.get_translation(tgt_lang)
-    es_text = translator.translate(fr_text)
+    fr_en = fr.get_translation(en)
+    en_es = en.get_translation(es)
+
+    en_text = fr_en.translate(fr_text)
+    es_text = en_es.translate(en_text)
 
     out_es_txt = f"{args.out_prefix}.es.txt"
     with open(out_es_txt, "w", encoding="utf-8") as f:
         f.write(es_text + "\n")
-    print(f"Wrote Spanish translation: {out_es_txt}")            
-
+    print(f"Wrote Spanish translation: {out_es_txt}")
     # ---------- 3) Optional TTS ----------
     if not args.no_tts:
         try:
