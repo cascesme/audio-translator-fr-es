@@ -1,0 +1,12 @@
+# ASR
+faster-whisper==1.0.3
+
+# Translation (offline)
+argostranslate==1.9.6
+
+# TTS (optional Spanish voice)
+TTS==0.22.0
+
+# Utilities
+numpy>=1.26,<3
+soundfile>=0.12
