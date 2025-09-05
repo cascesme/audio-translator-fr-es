@@ -12,4 +12,4 @@ services:
     working_dir: /data
     entrypoint: ["/entrypoint.sh"]
     # Default command: process all files in /data/audios, write outputs to /data/output/
-    command: ["/data/audios", "--out-prefix", "/data/output/output"]
+    command: ["/data/audios", "--out-prefix", "output", "--audio-format", "ogg"]
