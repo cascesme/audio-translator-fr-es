@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  fr2es-speech:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fr2es-speech:latest
+    container_name: fr2es-speech
+    volumes:
+      - ./data:/data   # host ./data <-> container /data
+    working_dir: /data
+    entrypoint: ["/entrypoint.sh"]
+    # Default command: process all files in /data/audios, write outputs to /data/output/
+    command: ["/data/audios", "--out-prefix", "/data/output/output"]
